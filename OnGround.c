@@ -13,10 +13,6 @@
 
 int dir;
 int irStrength1, irStrength2, irStrength3, irStrength4, irStrength5;
-int strength;
-int position;
-int compassOffset;
-
 
 
 #include "hitechnic-irseeker-v2.h"
@@ -25,39 +21,80 @@ int compassOffset;
 #include "hitechnic-compass.h";
 #include "lego-touch.h";
 #include "lego-ultrasound.h";
+
+void executeGeneral();
+
+
+
 task main()
 {
+
 	HTIRS2setDSPMode(IR_sensor,DSP_1200);
 	dir = HTIRS2readACDir(IR_sensor);
 	HTIRS2readAllACStrength(IR_sensor,irStrength1,irStrength2,irStrength3,irStrength4,irStrength5);
-	if(irStrength3>50){
-			position=1;	
-  }
-  else if(irStrength3>9){
-     position=2; 	
-}
-else{
-     position=3;	
-}
-  nxtDisplayTextLine(0,"position: %d",position);
- 	
-  if(position==position){
-  	//to center
-    while(TSreadState(msensor_S2_2)==0){
-    			motor[leftMotor]=-35;
-			motor[rightMotor]=-50;	
+
+  if(irStrength3>20){
+   executeGeneral();
+
+ }
+
+  else{
+  	 nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[leftMotor]<6.4*1120){
+    	motor[leftMotor]=-9;
+			motor[rightMotor]=-20;
+		}
+	nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[rightMotor]<1.65*1120){
+    	motor[leftMotor]=-20;
+			motor[rightMotor]=20;
+		}
+	dir = HTIRS2readACDir(IR_sensor);
+	HTIRS2readAllACStrength(IR_sensor,irStrength1,irStrength2,irStrength3,irStrength4,irStrength5);
+	if(irStrength3>70){
+    executeGeneral();
    }
+   else{
+  nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[leftMotor]<3.9*1120){
+    	motor[leftMotor]=-7;
+			motor[rightMotor]=-20;
+		}
+			nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[rightMotor]<1.5*1120){
+    	motor[leftMotor]=-20;
+			motor[rightMotor]=20;
+		}
+		executeGeneral();
+
+
+   }
+
+ }
+}
+
+void executeGeneral(){
+   //forward
+		 while(TSreadState(msensor_S2_2)==0){
+    motor[leftMotor]=-35;
+		motor[rightMotor]=-50;
+   }
+
    //back
   	nMotorEncoder[leftMotor]=0;
     nMotorEncoder[rightMotor]=0;
-		while(nMotorEncoder[rightMotor]>2*-1120){    
+		while(nMotorEncoder[rightMotor]>2*-1120){
 		motor[leftMotor]=15;
 		motor[rightMotor]=20;
 		}
 		//turn right
     nMotorEncoder[leftMotor]=0;
     nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[leftMotor]<1120){
+    while(nMotorEncoder[leftMotor]<1*1120){
     	motor[leftMotor]=0;
 			motor[rightMotor]=-20;
   }
@@ -97,7 +134,6 @@ else{
 			motor[rightMotor]=90;
 
 	}
-  }
-  
-  }
+}
+
 }
