@@ -43,7 +43,7 @@ goTo(0);
 }
 
 void extend(int toExtend){
-	
+	//replace 1 with 5 in final version
 while(nMotorEncoder[toExtend]<1*1120){
 motor[toExtend]=50;
 }
