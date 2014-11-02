@@ -1,6 +1,6 @@
 #pragma config(Hubs,  S1, HTMotor,  HTServo,  none,     none)
 #pragma config(Sensor, S2,     msensor,        sensorI2CCustom)
-#pragma config(Sensor, S3,     IR_sensor,      sensorI2CCustom)
+#pragma config(Sensor, S3,     IR_sensor,      sensorI2CCustomFastSkipStates)
 #pragma config(Motor,  mtr_S1_C1_1,     rightMotor,    tmotorTetrix, openLoop, reversed, encoder)
 #pragma config(Motor,  mtr_S1_C1_2,     leftMotor,     tmotorTetrix, openLoop, encoder)
 #pragma config(Servo,  srvo_S1_C2_1,    servo1,               tServoNone)
@@ -13,8 +13,9 @@
 
 int dir;
 int irStrength1, irStrength2, irStrength3, irStrength4, irStrength5;
-
-
+int position;
+int compassOffset;
+int direction;
 #include "hitechnic-irseeker-v2.h"
 #include "JoystickDriver.c";
 #include "hitechnic-sensormux.h";
@@ -23,117 +24,87 @@ int irStrength1, irStrength2, irStrength3, irStrength4, irStrength5;
 #include "lego-ultrasound.h";
 
 void executeGeneral();
+int getMax();
+int getAngle(int direction);
 
 
 
 task main()
 {
 
-	HTIRS2setDSPMode(IR_sensor,DSP_1200);
-	dir = HTIRS2readACDir(IR_sensor);
-	HTIRS2readAllACStrength(IR_sensor,irStrength1,irStrength2,irStrength3,irStrength4,irStrength5);
-
-  if(irStrength3>20){
-   executeGeneral();
-
- }
-
+HTIRS2setDSPMode(IR_sensor,DSP_1200);
+	    nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[rightMotor]<3.4*1120){
+    	motor[leftMotor]=25;
+			motor[rightMotor]=20;
+  }
+  compassOffset=HTMCreadHeading(msensor_S2_3);
+  while(HTMCreadHeading(msensor_S2_3)-compassOffset>-90){
+  	  motor[leftMotor]=-10;
+			motor[rightMotor]=10;
+  }
+	if(getMax()>20){
+	  executeGeneral(); 	
+  }
   else{
-  	 nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[leftMotor]<6.4*1120){
-    	motor[leftMotor]=-9;
-			motor[rightMotor]=-20;
-		}
-	nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[rightMotor]<1.65*1120){
-    	motor[leftMotor]=-20;
-			motor[rightMotor]=20;
-		}
-	dir = HTIRS2readACDir(IR_sensor);
-	HTIRS2readAllACStrength(IR_sensor,irStrength1,irStrength2,irStrength3,irStrength4,irStrength5);
-	if(irStrength3>70){
-    executeGeneral();
-   }
-   else{
-  nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[leftMotor]<3.9*1120){
-    	motor[leftMotor]=-7;
-			motor[rightMotor]=-20;
-		}
-			nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[rightMotor]<1.5*1120){
-    	motor[leftMotor]=-20;
-			motor[rightMotor]=20;
-		}
-		executeGeneral();
+  	 compassOffset=HTMCreadHeading(msensor_S2_3);
+     while(HTMCreadHeading(msensor_S2_3)-compassOffset<30){
+  	  motor[leftMotor]=30;
+			motor[rightMotor]=10;
+  }  
 
-
-   }
-
+	if(getMax()>20){
+	  executeGeneral(); 	
+  }
+  else{
+  	 compassOffset=HTMCreadHeading(msensor_S2_3);
+     while(HTMCreadHeading(msensor_S2_3)-compassOffset<58){
+  	  motor[leftMotor]=25;
+			motor[rightMotor]=10;
+  }
+  	  executeGeneral(); 
+  }
  }
+
+
+
+
 }
 
 void executeGeneral(){
-   //forward
-		 while(TSreadState(msensor_S2_2)==0){
-    motor[leftMotor]=-35;
-		motor[rightMotor]=-50;
-   }
-
-   //back
-  	nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-		while(nMotorEncoder[rightMotor]>2*-1120){
-		motor[leftMotor]=15;
-		motor[rightMotor]=20;
-		}
-		//turn right
-    nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[leftMotor]<1*1120){
-    	motor[leftMotor]=0;
-			motor[rightMotor]=-20;
-  }
-  //forward
-  	nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-		while(nMotorEncoder[rightMotor]<1.2*1120){
-     motor[leftMotor]=-15;
-		motor[rightMotor]=-20;
-		}
-		//turn left
-		 nMotorEncoder[leftMotor]=0;
-    nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[rightMotor]<1*1120){
-    	motor[leftMotor]=-20;
+    	 compassOffset=HTMCreadHeading(msensor_S2_3);
+     while(getAngle(HTMCreadHeading(msensor_S2_3)-compassOffset)<90){
+       direction=getAngle(HTMCreadHeading(msensor_S2_3)-compassOffset);
+  	  motor[leftMotor]=10;
+			motor[rightMotor]=-10;
+  } 
+    	  motor[leftMotor]=0;
 			motor[rightMotor]=0;
-  }
-  //forward
-  		  nMotorEncoder[leftMotor]=0;
-      nMotorEncoder[rightMotor]=0;
-		  while(nMotorEncoder[leftMotor]<2.5*1120){
-     motor[leftMotor]=-22;
-		motor[rightMotor]=-20;
-	}
-		//hook
-	while(true){
-		  nMotorEncoder[leftMotor]=0;
-      nMotorEncoder[rightMotor]=0;
-		  while(nMotorEncoder[leftMotor]<1*1120){
-    	motor[leftMotor]=90;
-			motor[rightMotor]=-100;
-		}
-			nMotorEncoder[leftMotor]=0;
-      nMotorEncoder[rightMotor]=0;
-		  while(nMotorEncoder[leftMotor]>-1*1120){
-    	motor[leftMotor]=-100;
-			motor[rightMotor]=90;
 
-	}
+}
+int getMax(){
+		HTIRS2readAllACStrength(IR_sensor,irStrength1,irStrength2,irStrength3,irStrength4,irStrength5);
+int currentMax=0;	
+if(irStrength1>currentMax){
+   currentMax=irStrength1;	
+}
+if(irStrength2>currentMax){
+   currentMax=irStrength2;	
+}
+if(irStrength3>currentMax){
+   currentMax=irStrength3;	
+}
+if(irStrength4>currentMax){
+   currentMax=irStrength4;	
+}
+if(irStrength5>currentMax){
+   currentMax=irStrength5;	
+}
+return currentMax;
+
 }
 
+int getAngle(int direction){
+  return (direction<0)? direction+360 : direction;	
 }
