@@ -16,36 +16,96 @@
 #include "lego-touch.h";
 #include "lego-ultrasound.h";
 
-int dist;
-bool goLeft=false;
-int compassOffset;	
+int getAngleClockwise(int direction);
+
+int getAngleCounterClockwise(int direction);
+
+int direction;
+int counter;
+int compassOffset;
 task main()
 {
-	while(TSreadState(msensor_S2_2)==0)
-	{
-		dist=USreadDist(msensor_S2_1);
-		goLeft = dist<15 || dist==255;
-		if(goLeft){
-			motor[leftMotor]=-50;
-			motor[rightMotor]=-40;
-	}
-	else{
-			motor[leftMotor]=-40;
+		    nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[rightMotor]>-0.1*1120){
+    	motor[leftMotor]=-50;
 			motor[rightMotor]=-50;
-	}
-	}
-  compassOffset=HTMCreadHeading(msensor_S2_3);
-  while(HTMCreadHeading(msensor_S2_3)-compassOffset<60){
-  	  motor[leftMotor]=20;
-			motor[rightMotor]=10;
   }
-  compassOffset=HTMCreadHeading(msensor_S2_3);
-  while(HTMCreadHeading(msensor_S2_3)-compassOffset>-60){
-  	  motor[leftMotor]=10;
-			motor[rightMotor]=20;
-  }
-  		while(true){
-    	motor[leftMotor]=20;
-			motor[rightMotor]=20;
+      	motor[leftMotor]=0;
+			motor[rightMotor]=0;
+
+    	 compassOffset=HTMCreadHeading(msensor_S2_3);
+    	 counter=0;
+     while(counter<3){
+       direction=getAngleClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset);
+  	  motor[leftMotor]=25;
+			motor[rightMotor]=7;
+			if(getAngleClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset)>=45){
+		counter++;
 		}
+		else{
+			counter=0;
+		}
+  }
+        	motor[leftMotor]=0;
+			motor[rightMotor]=0;
+  		    nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[rightMotor]<2*1120){
+    	motor[leftMotor]=25;
+			motor[rightMotor]=25;
+  }
+      	motor[leftMotor]=0;
+			motor[rightMotor]=0;
+  
+      	 compassOffset=HTMCreadHeading(msensor_S2_3);
+    	 counter=0;
+     while(counter<3){
+       direction=getAngleCounterClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset);
+  	  motor[leftMotor]=3;
+			motor[rightMotor]=25;
+			if(getAngleCounterClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset)<=-45){
+		counter++;
+		}
+		else{
+			counter=0;
+		}
+  }
+		motor[leftMotor]=0;
+			motor[rightMotor]=0;
+  		    nMotorEncoder[leftMotor]=0;
+    nMotorEncoder[rightMotor]=0;
+    while(nMotorEncoder[rightMotor]<6*1120){
+    	motor[leftMotor]=25;
+			motor[rightMotor]=20;
+  }
+      	motor[leftMotor]=0;
+			motor[rightMotor]=0;
+			
+
+}
+
+int getAngleClockwise(int direction){
+	int toReturn=0;
+  if(direction<-5){
+  	return direction+360;
+  }
+  else if(direction<0){
+  	return 0;
+  }
+  else{
+  return direction;
+}
+}
+int getAngleCounterClockwise(int direction){
+	int toReturn=0;
+  if(direction>5){
+  	return direction-360;
+  }
+  else if(direction>0){
+  	return 0;
+  }
+  else{
+  return direction;
+}
 }
