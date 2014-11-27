@@ -1,9 +1,10 @@
 #pragma config(Hubs,  S1, HTMotor,  HTServo,  none,     none)
-#pragma config(Sensor, S2,     msensor,        sensorI2CCustom)
-#pragma config(Motor,  mtr_S1_C1_1,     rightMotor,    tmotorTetrix, openLoop, reversed, encoder)
-#pragma config(Motor,  mtr_S1_C1_2,     leftMotor,     tmotorTetrix, openLoop, encoder)
-#pragma config(Servo,  srvo_S1_C2_1,    servo1,               tServoNone)
-#pragma config(Servo,  srvo_S1_C2_2,    servo2,               tServoNone)
+#pragma config(Sensor, S1,     ,               sensorI2CMuxController)
+#pragma config(Sensor, S3,     msensor,        sensorI2CCustom)
+#pragma config(Motor,  mtr_S1_C1_1,     leftMotor,     tmotorTetrix, openLoop, encoder)
+#pragma config(Motor,  mtr_S1_C1_2,     rightMotor,    tmotorTetrix, openLoop, reversed, encoder)
+#pragma config(Servo,  srvo_S1_C2_1,    gripperElbow,         tServoStandard)
+#pragma config(Servo,  srvo_S1_C2_2,    gripperWrist,         tServoStandard)
 #pragma config(Servo,  srvo_S1_C2_3,    servo3,               tServoNone)
 #pragma config(Servo,  srvo_S1_C2_4,    servo4,               tServoNone)
 #pragma config(Servo,  srvo_S1_C2_5,    servo5,               tServoNone)
@@ -20,27 +21,59 @@ int getAngleClockwise(int direction);
 
 int getAngleCounterClockwise(int direction);
 
+void lowerGripper();
+void raiseGripper();
+
 int direction;
 int counter;
 int compassOffset;
+int rightMulti = 1.5;
+int dist;
+    int leftSpeed=1;
+    int rightSpeed=1;
+const tMUXSensor US = msensor_S3_1;
+
 task main()
 {
+int delta;
+float gain = 1;
+
+
+
+
+/*while(true){
+ compassOffset=HTMCreadHeading(msensor_S3_3);	
+}*/
+
+   raiseGripper();
+     wait1Msec(2000);
 		    nMotorEncoder[leftMotor]=0;
     nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[rightMotor]>-0.1*1120){
-    	motor[leftMotor]=-50;
-			motor[rightMotor]=-50;
-  }
-      	motor[leftMotor]=0;
-			motor[rightMotor]=0;
 
-    	 compassOffset=HTMCreadHeading(msensor_S2_3);
+    compassOffset=HTMCreadHeading(msensor_S3_3);
+    motor[leftMotor]=-20;
+    motor[rightMotor]=-20;
+
+    while(nMotorEncoder[rightMotor]>-8*1120){
+    	delta = HTMCreadHeading(msensor_S3_3) - compassOffset;
+     	motor[leftMotor] = -50-delta*gain;
+			motor[rightMotor]= -50+delta*gain;
+  }
+     	motor[leftMotor]=0;
+			motor[rightMotor]=0;
+		wait1Msec(2000);
+  lowerGripper();
+  wait1Msec(2000);
+
+			
+
+    	 compassOffset=HTMCreadHeading(msensor_S3_3);
     	 counter=0;
      while(counter<3){
-       direction=getAngleClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset);
-  	  motor[leftMotor]=25;
-			motor[rightMotor]=7;
-			if(getAngleClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset)>=45){
+       direction=getAngleClockwise(HTMCreadHeading(msensor_S3_3)-compassOffset);
+  	  motor[leftMotor]=30;
+			motor[rightMotor]=4*rightMulti;
+			if(getAngleClockwise(HTMCreadHeading(msensor_S3_3)-compassOffset)>=60){
 		counter++;
 		}
 		else{
@@ -51,20 +84,20 @@ task main()
 			motor[rightMotor]=0;
   		    nMotorEncoder[leftMotor]=0;
     nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[rightMotor]<2*1120){
+    while(nMotorEncoder[rightMotor]<4.5*1120){
     	motor[leftMotor]=25;
-			motor[rightMotor]=25;
+			motor[rightMotor]=25*rightMulti;
   }
       	motor[leftMotor]=0;
 			motor[rightMotor]=0;
-  
-      	 compassOffset=HTMCreadHeading(msensor_S2_3);
+
+      	 compassOffset=HTMCreadHeading(msensor_S3_3);
     	 counter=0;
      while(counter<3){
-       direction=getAngleCounterClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset);
-  	  motor[leftMotor]=3;
-			motor[rightMotor]=25;
-			if(getAngleCounterClockwise(HTMCreadHeading(msensor_S2_3)-compassOffset)<=-45){
+       direction=getAngleCounterClockwise(HTMCreadHeading(msensor_S3_3)-compassOffset);
+  	  motor[leftMotor]=-30;
+			motor[rightMotor]=30*rightMulti;
+			if(getAngleCounterClockwise(HTMCreadHeading(msensor_S3_3)-compassOffset)<=-60){
 		counter++;
 		}
 		else{
@@ -75,19 +108,31 @@ task main()
 			motor[rightMotor]=0;
   		    nMotorEncoder[leftMotor]=0;
     nMotorEncoder[rightMotor]=0;
-    while(nMotorEncoder[rightMotor]<6*1120){
-    	motor[leftMotor]=25;
-			motor[rightMotor]=20;
+    while(nMotorEncoder[rightMotor]<3*1120){
+    	motor[leftMotor]=20;
+			motor[rightMotor]=20*rightMulti;
   }
       	motor[leftMotor]=0;
 			motor[rightMotor]=0;
-			
+      	 compassOffset=HTMCreadHeading(msensor_S3_3);
+    	 counter=0;
+     while(counter<3){
+       direction=getAngleCounterClockwise(HTMCreadHeading(msensor_S3_3)-compassOffset);
+  	  motor[leftMotor]=-30;
+			motor[rightMotor]=30*rightMulti;
+			if(getAngleCounterClockwise(HTMCreadHeading(msensor_S3_3)-compassOffset)<=-110){
+		counter++;
+		}
+		else{
+			counter=0;
+		}
+  }
 
 }
 
 int getAngleClockwise(int direction){
 	int toReturn=0;
-  if(direction<-5){
+  if(direction<-10){
   	return direction+360;
   }
   else if(direction<0){
@@ -99,7 +144,7 @@ int getAngleClockwise(int direction){
 }
 int getAngleCounterClockwise(int direction){
 	int toReturn=0;
-  if(direction>5){
+  if(direction>10){
   	return direction-360;
   }
   else if(direction>0){
@@ -108,4 +153,15 @@ int getAngleCounterClockwise(int direction){
   else{
   return direction;
 }
+}
+void lowerGripper(){
+
+servo[gripperElbow]=200;
+servo[gripperWrist]=200;
+}
+
+void raiseGripper(){
+
+servo[gripperElbow]=10;
+servo[gripperWrist]=255;
 }
